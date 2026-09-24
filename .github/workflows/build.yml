@@ -12,41 +12,35 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - name: Setup Java (v5 Action)
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Node.js
+      - name: Setup Node.js (Node 22)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Enable GitHub Pages & Copy App
+      - name: Initialize Android App Project
         run: |
-          mkdir public
-          cp index.html public/
-          
-      - name: Build WebAPK with Bubblewrap
-        run: |
-          npm install -g @bubblewrap/cli
-          yes | bubblewrap init --manifest=https://raw.githubusercontent.com/${{ github.repository }}/main/index.html || true
-
-      - name: Create Native APK via Android Gradle
-        run: |
-          mkdir -p android_app
-          cd android_app
+          mkdir -p www
+          cp index.html www/index.html
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init "PORTCODE" "com.deathwyler.portcode" --web-dir ../public
+          npx cap init "PORTCODE" "com.deathwyler.portcode" --web-dir www
           npx cap add android
+          npx cap copy android
+
+      - name: Build Android Debug APK
+        run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Upload APK File
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: PORTCODE-DEATHWYLER-APK
-          path: android_app/android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

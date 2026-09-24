@@ -12,39 +12,28 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java (JDK 17)
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
 
-      - name: Initialize Ionic/Capacitor App Project
+      - name: Build Android App Project
         run: |
-          mkdir build_dir
-          cp index.html build_dir/
-          npm install -g @ionic/cli
-          ionic start temp_app blank --type=angular --no-interactive --no-git --link=false
-          cd temp_app
-          rm -rf src/app/*
-          mkdir -p www
-          cp ../index.html www/index.html
-          npm install @capacitor/android
-          npx cap add android
-          npx cap sync android
+          npm install -g cordova
+          cordova create portapp com.deathwyler.portcode PORTCODE
+          cp index.html portapp/www/index.html
+          cd portapp
+          cordova platform add android@12.0.0
+          cordova build android --debug
 
-      - name: Build Android APK
-        run: |
-          cd temp_app/android
-          chmod +x gradlew
-          ./gradlew assembleDebug
-
-      - name: Upload APK Artifact
+      - name: Upload APK File
         uses: actions/upload-artifact@v4
         with:
           name: PORTCODE-DEATHWYLER-APK
-          path: temp_app/android/app/build/outputs/apk/debug/app-debug.apk
+          path: portapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
